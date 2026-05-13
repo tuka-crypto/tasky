@@ -31,7 +31,7 @@ class AuthController extends Controller
                 'last_name'     => $request->last_name,
                 'profile_image' => $profilePath,
                 'gender'        => $request->gender,
-                'role'          => 'member',
+                'role'          => $request->role,
                 'date_of_birth' => $request->date_of_birth,
                 'is_approved'   => false,
             ]);

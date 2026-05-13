@@ -16,9 +16,6 @@ use App\Mail\ResetCodeMail;
 
 class AuthController extends Controller
 {
-    // ---------------------------
-    // SIGN UP
-    // ---------------------------
     public function signup(SignupRequest $request)
     {
         try {
@@ -27,22 +24,14 @@ class AuthController extends Controller
                 uniqid().'_'.$request->file('profile_image')->getClientOriginalName(),
                 'public'
             );
-
-            $idCardPath = $request->file('id_card_image')->storeAs(
-                'id_cards',
-                uniqid().'_'.$request->file('id_card_image')->getClientOriginalName(),
-                'public'
-            );
-
             $user = User::create([
                 'email'         => $request->email,
                 'password'      => Hash::make($request->password),
                 'first_name'    => $request->first_name,
                 'last_name'     => $request->last_name,
                 'profile_image' => $profilePath,
-                'id_card_image' => $idCardPath,
                 'gender'        => $request->gender,
-                'role'          => $request->role,
+                'role'          => 'member',
                 'date_of_birth' => $request->date_of_birth,
                 'is_approved'   => false,
             ]);
@@ -55,8 +44,6 @@ class AuthController extends Controller
 
         } catch (\Exception $e) {
             if (isset($profilePath)) Storage::disk('public')->delete($profilePath);
-            if (isset($idCardPath)) Storage::disk('public')->delete($idCardPath);
-
             Log::error($e);
 
             return response()->json([
@@ -65,10 +52,6 @@ class AuthController extends Controller
             ], 500);
         }
     }
-
-    // ---------------------------
-    // ADMIN LOGIN
-    // ---------------------------
     public function adminLogin(AdminloginRequest $request)
     {
         try {
@@ -95,10 +78,6 @@ class AuthController extends Controller
             return response()->json(['message' => __('messages.error')], 500);
         }
     }
-
-    // ---------------------------
-    // USER LOGIN
-    // ---------------------------
     public function signin(SigninRequest $request)
     {
         try {
@@ -125,10 +104,6 @@ class AuthController extends Controller
             return response()->json(['message' => __('messages.error')], 500);
         }
     }
-
-    // ---------------------------
-    // LOGOUT
-    // ---------------------------
     public function logout(Request $request)
     {
         try {
@@ -143,10 +118,6 @@ class AuthController extends Controller
             return response()->json(['message' => __('messages.error')], 500);
         }
     }
-
-    // ---------------------------
-    // SEND RESET CODE
-    // ---------------------------
     public function sendResetCode(Request $request)
     {
         $request->validate(['email' => 'required|email']);
@@ -168,10 +139,6 @@ class AuthController extends Controller
 
         return response()->json(['message' => 'تم إرسال كود استعادة كلمة المرور']);
     }
-
-    // ---------------------------
-    // VERIFY RESET CODE
-    // ---------------------------
     public function verifyResetCode(Request $request)
     {
         $request->validate([
@@ -195,10 +162,6 @@ class AuthController extends Controller
 
         return response()->json(['message' => 'الكود صحيح']);
     }
-
-    // ---------------------------
-    // RESET PASSWORD
-    // ---------------------------
     public function resetPassword(Request $request)
     {
         $request->validate([
@@ -229,10 +192,6 @@ class AuthController extends Controller
 
         return response()->json(['message' => 'تم تغيير كلمة المرور بنجاح']);
     }
-
-    // ---------------------------
-    // PENDING USERS
-    // ---------------------------
     public function pendingUsers(Request $request)
     {
         if (!$request->user()->isAdmin()) {
@@ -247,10 +206,6 @@ class AuthController extends Controller
             'message' => __('messages.pending')
         ]);
     }
-
-    // ---------------------------
-    // APPROVE USER
-    // ---------------------------
     public function approveUser(Request $request, User $user)
     {
         if (!$request->user()->isAdmin()) {
@@ -265,10 +220,6 @@ class AuthController extends Controller
             'data'    => new UserResource($user)
         ]);
     }
-
-    // ---------------------------
-    // REJECT USER
-    // ---------------------------
     public function rejectUser(Request $request, User $user)
     {
         if (!$request->user()->isAdmin()) {
@@ -283,10 +234,6 @@ class AuthController extends Controller
             'data'    => new UserResource($user)
         ]);
     }
-
-    // ---------------------------
-    // DELETE USER
-    // ---------------------------
     public function deleteUser(Request $request, User $user)
     {
         if (!$request->user()->isAdmin()) {

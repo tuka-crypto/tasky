@@ -19,7 +19,6 @@ return new class extends Migration
             $table->string('first_name');
             $table->string('last_name');
             $table->string('profile_image')->nullable();
-            $table->string('id_card_image')->nullable();
             $table->enum('gender',['man','woman'])->nullable();
             $table->enum('role', ['member','admin','manager'])->default('member');
             $table->string('reset_code')->nullable();

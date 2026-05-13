@@ -88,7 +88,7 @@ class AuthController extends Controller
             }
 
             if (!$user->is_approved) {
-                return response()->json(['message' => __('messages.otp_pending')], 403);
+                return response()->json(['message' => __('pending admin approval')], 403);
             }
 
             $user->tokens()->delete();

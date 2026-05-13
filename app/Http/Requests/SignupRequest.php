@@ -30,7 +30,6 @@ class SignupRequest extends FormRequest
             'last_name' => 'required|string|max:100',
             'date_of_birth' => 'required|date|before:today',
             'profile_image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-            'id_card_image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
             'gender'=>'required|in:man,woman',
         ];
     }

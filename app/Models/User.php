@@ -26,7 +26,6 @@ class User extends Authenticatable
         'role',
         'date_of_birth',
         'profile_image',
-        'id_card_image',
         'gender',
         'is_approved',
         'language',

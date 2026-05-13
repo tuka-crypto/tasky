@@ -24,7 +24,6 @@ class UserResource extends JsonResource
             'date_of_birth' => $this->date_of_birth,
             'gender'=>$this->gender,
             'profile_image' => $this->profile_image ? asset('storage/' . $this->profile_image) : null,
-            'id_card_image' => $this->id_card_image ? asset('storage/' . $this->id_card_image) : null,
             'created_at'    => $this->created_at,
             'updated_at'    => $this->updated_at,];
     }

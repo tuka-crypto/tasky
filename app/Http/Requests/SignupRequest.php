@@ -12,7 +12,7 @@ class SignupRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -25,7 +25,7 @@ class SignupRequest extends FormRequest
         return [
             'email'=>'required|email|unique:users|email',
             'password'=>'required|min:5',
-            'role' => 'required|in:member,admin',
+            'role' => 'required|in:member,admin,manager',
             'first_name' => 'required|string|max:100',
             'last_name' => 'required|string|max:100',
             'date_of_birth' => 'required|date|before:today',

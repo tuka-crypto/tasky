@@ -6,8 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-
-class AdminSeeder extends Seeder
+class adminSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -15,12 +14,14 @@ class AdminSeeder extends Seeder
     public function run(): void
     {
         User::create([
-        'first_name' => 'tuka',
-        'last_name'  => 'mubark',
-        'email'      => 'ttuk9236@gmail.com',
-        'password'   => Hash::make('admin123'),
-        'role'       => 'admin',
-        'is_approved'=> true,
-    ]);
+            'first_name'   => 'tuka',
+            'last_name'    => 'mubark',
+            'email' => 'ttuk9236@gmail.com',
+            'password'     => Hash::make('123456'),
+            'role'         => 'admin',
+            'is_approved'  => true,
+            'date_of_birth'=> '1990-01-01',
+            'gender'=>'woman'
+        ]);
     }
 }

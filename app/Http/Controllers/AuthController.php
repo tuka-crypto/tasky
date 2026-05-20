@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\AdminloginRequest;
+use App\Http\Requests\AdminLoginRequest;
 use App\Http\Requests\SigninRequest;
 use App\Http\Requests\SignupRequest;
 use App\Http\Resources\UserResource;
@@ -16,14 +16,21 @@ use App\Mail\ResetCodeMail;
 
 class AuthController extends Controller
 {
+    /**
+     * User Signup
+     */
     public function signup(SignupRequest $request)
     {
+        $profilePath = null;
         try {
-            $profilePath = $request->file('profile_image')->storeAs(
-                'profiles',
-                uniqid().'_'.$request->file('profile_image')->getClientOriginalName(),
-                'public'
-            );
+            
+            if ($request->hasFile('profile_image')) {
+                $profilePath = $request->file('profile_image')->storeAs(
+                    'profiles',
+                    uniqid().'_'.$request->file('profile_image')->getClientOriginalName(),
+                    'public'
+                );
+            }
             $user = User::create([
                 'email'         => $request->email,
                 'password'      => Hash::make($request->password),
@@ -43,30 +50,32 @@ class AuthController extends Controller
             ], 201);
 
         } catch (\Exception $e) {
-            if (isset($profilePath)) Storage::disk('public')->delete($profilePath);
+            if ($profilePath) Storage::disk('public')->delete($profilePath);
             Log::error($e);
 
             return response()->json([
-                'status'  => 'Error',
+                'status'  => 'error',
                 'message' => __('messages.error')
             ], 500);
         }
     }
+
+    /**
+     * Admin Login
+     */
     public function adminLogin(AdminloginRequest $request)
     {
         try {
-            $user = User::where('email', $request->email)->first();
+            $user = User::where('email', $request->email)
+                        ->where('role', 'admin')
+                        ->first();
 
             if (!$user || !Hash::check($request->password, $user->password)) {
                 return response()->json(['message' => __('messages.login_failed')], 401);
             }
 
-            if (!$user->isAdmin()) {
-                return response()->json(['message' => __('messages.unauthorize')], 403);
-            }
-
             $user->tokens()->delete();
-            $token = $user->createToken('auth_token')->plainTextToken;
+            $token = $user->createToken('admin_token')->plainTextToken;
 
             return response()->json([
                 'token' => $token,
@@ -78,6 +87,10 @@ class AuthController extends Controller
             return response()->json(['message' => __('messages.error')], 500);
         }
     }
+
+    /**
+     * User Login
+     */
     public function signin(SigninRequest $request)
     {
         try {
@@ -88,7 +101,7 @@ class AuthController extends Controller
             }
 
             if (!$user->is_approved) {
-                return response()->json(['message' => __('pending admin approval')], 403);
+                return response()->json(['message' => __('messages.pending_approval]')], 403);
             }
 
             $user->tokens()->delete();
@@ -104,6 +117,10 @@ class AuthController extends Controller
             return response()->json(['message' => __('messages.error')], 500);
         }
     }
+
+    /**
+     * Logout
+     */
     public function logout(Request $request)
     {
         try {
@@ -118,6 +135,10 @@ class AuthController extends Controller
             return response()->json(['message' => __('messages.error')], 500);
         }
     }
+
+    /**
+     * Send Reset Code
+     */
     public function sendResetCode(Request $request)
     {
         $request->validate(['email' => 'required|email']);
@@ -125,7 +146,7 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
-            return response()->json(['message' => 'المستخدم غير موجود'], 404);
+            return response()->json(['message' => __('messages.user_not_found')], 404);
         }
 
         $code = rand(100000, 999999);
@@ -137,8 +158,12 @@ class AuthController extends Controller
 
         Mail::to($user->email)->send(new ResetCodeMail($code));
 
-        return response()->json(['message' => 'تم إرسال كود استعادة كلمة المرور']);
+        return response()->json(['message' => __('messages.reset_code_sent')]);
     }
+
+    /**
+     * Verify Reset Code
+     */
     public function verifyResetCode(Request $request)
     {
         $request->validate([
@@ -149,19 +174,23 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
-            return response()->json(['message' => 'المستخدم غير موجود'], 404);
+            return response()->json(['message' => __('messages.user_not_found')], 404);
         }
 
         if ($user->reset_code !== $request->reset_code) {
-            return response()->json(['message' => 'الكود غير صحيح'], 401);
+            return response()->json(['message' => __('messages.invalid_code')], 401);
         }
 
         if (now()->greaterThan($user->reset_expires_at)) {
-            return response()->json(['message' => 'انتهت صلاحية الكود'], 403);
+            return response()->json(['message' => __('messages.code_expired')], 403);
         }
 
-        return response()->json(['message' => 'الكود صحيح']);
+        return response()->json(['message' => __('messages.code_valid')]);
     }
+
+    /**
+     * Reset Password
+     */
     public function resetPassword(Request $request)
     {
         $request->validate([
@@ -173,15 +202,15 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
-            return response()->json(['message' => 'المستخدم غير موجود'], 404);
+            return response()->json(['message' => __('messages.user_not_found')], 404);
         }
 
         if ($user->reset_code !== $request->reset_code) {
-            return response()->json(['message' => 'الكود غير صحيح'], 401);
+            return response()->json(['message' => __('messages.invalid_code')], 401);
         }
 
         if (now()->greaterThan($user->reset_expires_at)) {
-            return response()->json(['message' => 'انتهت صلاحية الكود'], 403);
+            return response()->json(['message' => __('messages.code_expired')], 403);
         }
 
         $user->update([
@@ -190,8 +219,12 @@ class AuthController extends Controller
             'reset_expires_at' => null,
         ]);
 
-        return response()->json(['message' => 'تم تغيير كلمة المرور بنجاح']);
+        return response()->json(['message' => __('messages.password_changed')]);
     }
+
+    /**
+     * List Pending Users
+     */
     public function pendingUsers(Request $request)
     {
         if (!$request->user()->isAdmin()) {
@@ -206,6 +239,10 @@ class AuthController extends Controller
             'message' => __('messages.pending')
         ]);
     }
+
+    /**
+     * Approve User
+     */
     public function approveUser(Request $request, User $user)
     {
         if (!$request->user()->isAdmin()) {
@@ -220,13 +257,20 @@ class AuthController extends Controller
             'data'    => new UserResource($user)
         ]);
     }
+
+    /**
+     * Reject User
+     */
     public function rejectUser(Request $request, User $user)
     {
         if (!$request->user()->isAdmin()) {
             return response()->json(['message' => __('messages.unauthorize')], 403);
         }
 
-        $user->update(['is_approved' => false]);
+        $user->update([
+            'is_approved' => false,
+            'reset_code' => null,
+        ]);
 
         return response()->json([
             'status'  => 'success',
@@ -234,10 +278,18 @@ class AuthController extends Controller
             'data'    => new UserResource($user)
         ]);
     }
+
+    /**
+     * Delete User
+     */
     public function deleteUser(Request $request, User $user)
     {
         if (!$request->user()->isAdmin()) {
             return response()->json(['message' => __('messages.unauthorize')], 403);
+        }
+
+        if ($user->profile_image) {
+            Storage::disk('public')->delete($user->profile_image);
         }
 
         $user->delete();

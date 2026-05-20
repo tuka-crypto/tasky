@@ -19,20 +19,3 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/delete-user/{user}', [AuthController::class, 'deleteUser']);
     });
 });
-Route::middleware(['auth:sanctum'])->group(function () {
-    // Admin routes
-    Route::middleware('admin')->group(function () {
-        Route::get('/tasks', [TaskController::class, 'index']);          // show all tasks
-        Route::post('/tasks', [TaskController::class, 'store']);         // create task
-        Route::get('/tasks/{task}', [TaskController::class, 'show']);    // show one task
-        Route::put('/tasks/{task}', [TaskController::class, 'update']);  // update task
-        Route::delete('/tasks/{task}', [TaskController::class, 'destroy']); // delete task
-    });
-    // Member routes
-    Route::middleware('member')->group(function () {
-        Route::get('/my-tasks', [TaskController::class, 'myTasks']);              // show all his tasks
-        Route::get('/my-tasks/{task}', [TaskController::class, 'myTask']);        // show one of his tasks
-        Route::put('/my-tasks/{task}/status', [TaskController::class, 'updateStatus']); // update status
-    });
-});
-

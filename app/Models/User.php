@@ -11,8 +11,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
-    use HasApiTokens;
+    use HasApiTokens, HasFactory, Notifiable;
     /**
      * The attributes that are mass assignable.
      *
@@ -43,6 +42,34 @@ class User extends Authenticatable
     {
         return $this->role === 'manager';
     }
+    public function projects()
+    {
+    return $this->belongsToMany(Project::class, 'project_members');
+    }
+    public function createdProjects()
+    {
+    return $this->hasMany(Project::class, 'created_by');
+    }
+    public function createdTasks()
+    {
+    return $this->hasMany(Task::class, 'created_by');
+    }
+    public function tasks()
+    {
+    return $this->belongsToMany(Task::class, 'task_members');
+    }
+    public function performance()
+    {
+    return $this->hasOne(UserPerformance::class);
+    }
+    public function rewards()
+    {
+    return $this->hasMany(Reward::class);
+    }
+
+
+
+
     /**
      * The attributes that should be hidden for serialization.
      *

@@ -14,6 +14,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Admin only
     Route::middleware('admin')->group(function () {
         Route::get('/pending-users', [AuthController::class, 'pendingUsers']);
+        Route::get('/users/count', [AuthController::class, 'usersCount']);
         Route::put('/approve-user/{user}', [AuthController::class, 'approveUser']);
         Route::put('/reject-user/{user}', [AuthController::class, 'rejectUser']);
         Route::delete('/delete-user/{user}', [AuthController::class, 'deleteUser']);

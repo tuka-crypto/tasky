@@ -101,7 +101,7 @@ class AuthController extends Controller
             }
 
             if (!$user->is_approved) {
-                return response()->json(['message' => __('messages.pending_approval]')], 403);
+                return response()->json(['message' => __('messages.pending_approval')], 403);
             }
 
             $user->tokens()->delete();
@@ -221,6 +221,21 @@ class AuthController extends Controller
 
         return response()->json(['message' => __('messages.password_changed')]);
     }
+    /*
+    * Get Count of Non-Admin Pending Users
+    */
+    public function usersCount(Request $request)
+{
+    if (!$request->user()->isAdmin()) {
+        return response()->json(['message' =>__('messages.unauthorize')], 403);
+    }
+    $count = User::where('role', '!=', 'admin')->where('is_approved',false)->count();
+    return response()->json([
+        'status'  => 'success',
+        'message' =>__('messages.num_user'),
+        'count'   => $count
+    ]);
+}
 
     /**
      * List Pending Users

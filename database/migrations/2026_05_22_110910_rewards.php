@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-
             $table->float('reward_amount')->default(0);
             $table->string('reward_level')->nullable();
             $table->text('notes')->nullable();

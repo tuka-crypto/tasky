@@ -22,26 +22,37 @@ class User extends Authenticatable
         'password',
         'first_name',
         'last_name',
-        'role',
         'date_of_birth',
         'profile_image',
         'gender',
+        'role_id',
         'is_approved',
         'language',
         'theme'
     ];
-    public function isAdmin():bool
+    public function role()
     {
-        return $this->role === 'admin';
+    return $this->belongsTo(Role::class);
     }
-    public function isMember():bool
+    public function isAdmin(): bool
     {
-        return $this->role === 'member';
+        return $this->role && $this->role->name === 'admin';
     }
-    public function isManager():bool
+
+    public function isMember(): bool
     {
-        return $this->role === 'manager';
+        return $this->role && $this->role->name === 'member';
     }
+
+    public function isManager(): bool
+    {
+        return $this->role && $this->role->name === 'manager';
+    }
+    public function teams()
+    {
+    return $this->belongsToMany(Team::class, 'team_members');
+    }
+
     public function projects()
     {
     return $this->belongsToMany(Project::class, 'project_members');

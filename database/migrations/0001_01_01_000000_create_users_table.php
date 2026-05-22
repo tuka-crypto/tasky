@@ -20,7 +20,6 @@ return new class extends Migration
             $table->string('last_name');
             $table->string('profile_image')->nullable();
             $table->enum('gender',['man','woman'])->nullable();
-            $table->enum('role', ['member','admin','manager'])->default('member');
             $table->string('reset_code')->nullable();
             $table->timestamp('reset_expires_at')->nullable();
             $table->date('date_of_birth')->nullable();
@@ -30,6 +29,8 @@ return new class extends Migration
             $table->string('theme')->default('light');
             $table->rememberToken();
             $table->timestamps();
+            $table->foreignId('role_id')->constrained('roles');
+
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

@@ -27,6 +27,7 @@ return new class extends Migration
 
         $table->foreign('project_id')->references('id')->on('projects')->onDelete('cascade');
         $table->foreign('created_by')->references('id')->on('users')->onDelete('cascade');
+        $table->foreignId('category_id')->nullable()->constrained('categories');
     });
 }
 

@@ -17,6 +17,10 @@ class Task extends Model
         'created_by',
     ];
 
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
     public function project()
     {
         return $this->belongsTo(Project::class);
@@ -30,5 +34,20 @@ class Task extends Model
     {
     return $this->belongsToMany(User::class, 'task_members');
     }
+    public function tags()
+    {
+    return $this->belongsToMany(Tag::class, 'task_tags');
+    }
+    public function dependencies()
+{
+    return $this->hasMany(TaskDependency::class, 'task_id');
+}
+
+public function blockedBy()
+{
+    return $this->hasMany(TaskDependency::class, 'depends_on_task_id');
+}
+
+
 
 }

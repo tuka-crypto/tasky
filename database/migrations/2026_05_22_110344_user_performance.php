@@ -14,10 +14,11 @@ return new class extends Migration
         Schema::create('user_performance', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-
             $table->integer('completed_tasks')->default(0);
             $table->integer('late_tasks')->default(0);
             $table->integer('total_tasks')->default(0);
+            $table->integer('streak_days')->default(0);
+            $table->enum('calculation_type', ['auto', 'manual'])->default('auto');
 
             $table->float('performance_score')->default(0);
             $table->timestamps();

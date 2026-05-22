@@ -18,7 +18,7 @@ class adminSeeder extends Seeder
             'last_name'    => 'mubark',
             'email' => 'ttuk9236@gmail.com',
             'password'     => Hash::make('123456'),
-            'role'         => 'admin',
+            'role_id'         => 1,
             'is_approved'  => true,
             'date_of_birth'=> '1990-01-01',
             'gender'=>'woman'

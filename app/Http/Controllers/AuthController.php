@@ -38,7 +38,7 @@ class AuthController extends Controller
                 'last_name'     => $request->last_name,
                 'profile_image' => $profilePath,
                 'gender'        => $request->gender,
-                'role'          => $request->role,
+                'role_id'          => $request->role_id,
                 'date_of_birth' => $request->date_of_birth,
                 'is_approved'   => false,
             ]);
@@ -67,7 +67,7 @@ class AuthController extends Controller
     {
         try {
             $user = User::where('email', $request->email)
-                        ->where('role', 'admin')
+                        ->where('role_id', 1)
                         ->first();
 
             if (!$user || !Hash::check($request->password, $user->password)) {
@@ -229,7 +229,7 @@ class AuthController extends Controller
     if (!$request->user()->isAdmin()) {
         return response()->json(['message' =>__('messages.unauthorize')], 403);
     }
-    $count = User::where('role', '!=', 'admin')->where('is_approved',false)->count();
+    $count = User::where('role_id', '!=', 1)->where('is_approved',false)->count();
     return response()->json([
         'status'  => 'success',
         'message' =>__('messages.num_user'),

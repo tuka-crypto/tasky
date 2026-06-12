@@ -45,7 +45,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'status'  => 'success',
-                'message' => __('messages.register_success'),
+                'message' => __('message.signup_success'),
                 'data'    => new UserResource($user)
             ], 201);
 
@@ -55,7 +55,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'status'  => 'error',
-                'message' => __('messages.error')
+                'message' => __('message.error')
             ], 500);
         }
     }
@@ -71,7 +71,7 @@ class AuthController extends Controller
                         ->first();
 
             if (!$user || !Hash::check($request->password, $user->password)) {
-                return response()->json(['message' => __('messages.login_failed')], 401);
+                return response()->json(['message' => __('message.forbidden')], 401);
             }
 
             $user->tokens()->delete();
@@ -84,7 +84,7 @@ class AuthController extends Controller
 
         } catch (\Exception $e) {
             Log::error($e);
-            return response()->json(['message' => __('messages.error')], 500);
+            return response()->json(['message' => __('message.error')], 500);
         }
     }
 
@@ -97,11 +97,11 @@ class AuthController extends Controller
             $user = User::where('email', $request->email)->first();
 
             if (!$user || !Hash::check($request->password, $user->password)) {
-                return response()->json(['message' => __('messages.login_failed')], 401);
+                return response()->json(['message' => __('message.unauthorized')], 401);
             }
 
             if (!$user->is_approved) {
-                return response()->json(['message' => __('messages.pending_approval')], 403);
+                return response()->json(['message' => __('message.account_not_approved')], 403);
             }
 
             $user->tokens()->delete();
@@ -114,7 +114,7 @@ class AuthController extends Controller
 
         } catch (\Exception $e) {
             Log::error($e);
-            return response()->json(['message' => __('messages.error')], 500);
+            return response()->json(['message' => __('message.error')], 500);
         }
     }
 
@@ -128,11 +128,11 @@ class AuthController extends Controller
                 $request->user()->currentAccessToken()->delete();
             }
 
-            return response()->json(['message' => __('messages.logout_success')]);
+            return response()->json(['message' => __('message.logout_success')]);
 
         } catch (\Exception $e) {
             Log::error($e);
-            return response()->json(['message' => __('messages.error')], 500);
+            return response()->json(['message' => __('message.error')], 500);
         }
     }
 
@@ -146,7 +146,7 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
-            return response()->json(['message' => __('messages.user_not_found')], 404);
+            return response()->json(['message' => __('message.not_found')], 404);
         }
 
         $code = rand(100000, 999999);
@@ -158,7 +158,7 @@ class AuthController extends Controller
 
         Mail::to($user->email)->send(new ResetCodeMail($code));
 
-        return response()->json(['message' => __('messages.reset_code_sent')]);
+        return response()->json(['message' => __('message.reset_code_sent')]);
     }
 
     /**
@@ -174,18 +174,18 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
-            return response()->json(['message' => __('messages.user_not_found')], 404);
+            return response()->json(['message' => __('message.not_found')], 404);
         }
 
         if ($user->reset_code !== $request->reset_code) {
-            return response()->json(['message' => __('messages.invalid_code')], 401);
+            return response()->json(['message' => __('message.reset_code_invalid')], 401);
         }
 
         if (now()->greaterThan($user->reset_expires_at)) {
-            return response()->json(['message' => __('messages.code_expired')], 403);
+            return response()->json(['message' => __('message.code_expired')], 403);
         }
 
-        return response()->json(['message' => __('messages.code_valid')]);
+        return response()->json(['message' => __('message.code_valid')]);
     }
 
     /**
@@ -202,15 +202,15 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
-            return response()->json(['message' => __('messages.user_not_found')], 404);
+            return response()->json(['message' => __('message.not_found')], 404);
         }
 
         if ($user->reset_code !== $request->reset_code) {
-            return response()->json(['message' => __('messages.invalid_code')], 401);
+            return response()->json(['message' => __('message.reset_code_invalid')], 401);
         }
 
         if (now()->greaterThan($user->reset_expires_at)) {
-            return response()->json(['message' => __('messages.code_expired')], 403);
+            return response()->json(['message' => __('message.code_expired')], 403);
         }
 
         $user->update([
@@ -219,7 +219,7 @@ class AuthController extends Controller
             'reset_expires_at' => null,
         ]);
 
-        return response()->json(['message' => __('messages.password_changed')]);
+        return response()->json(['message' => __('message.password_changed')]);
     }
     /*
     * Get Count of Non-Admin Pending Users
@@ -227,12 +227,12 @@ class AuthController extends Controller
     public function usersCount(Request $request)
 {
     if (!$request->user()->isAdmin()) {
-        return response()->json(['message' =>__('messages.unauthorize')], 403);
+        return response()->json(['message' =>__('message.unauthorized')], 403);
     }
     $count = User::where('role_id', '!=', 1)->where('is_approved',false)->count();
     return response()->json([
         'status'  => 'success',
-        'message' =>__('messages.num_user'),
+        'message' =>__('message.num_user'),
         'count'   => $count
     ]);
 }
@@ -243,7 +243,7 @@ class AuthController extends Controller
     public function pendingUsers(Request $request)
     {
         if (!$request->user()->isAdmin()) {
-            return response()->json(['message' => __('messages.unauthorize')], 403);
+            return response()->json(['message' => __('message.unauthorized')], 403);
         }
 
         $users = User::where('is_approved', false)->get();
@@ -251,7 +251,7 @@ class AuthController extends Controller
         return response()->json([
             'status'  => 'success',
             'data'    => UserResource::collection($users),
-            'message' => __('messages.pending')
+            'message' => __('message.pending')
         ]);
     }
 
@@ -261,14 +261,14 @@ class AuthController extends Controller
     public function approveUser(Request $request, User $user)
     {
         if (!$request->user()->isAdmin()) {
-            return response()->json(['message' => __('messages.unauthorize')], 403);
+            return response()->json(['message' => __('message.unauthorized')], 403);
         }
 
         $user->update(['is_approved' => true]);
 
         return response()->json([
             'status'  => 'success',
-            'message' => __('messages.approve'),
+            'message' => __('message.user_approved'),
             'data'    => new UserResource($user)
         ]);
     }
@@ -279,7 +279,7 @@ class AuthController extends Controller
     public function rejectUser(Request $request, User $user)
     {
         if (!$request->user()->isAdmin()) {
-            return response()->json(['message' => __('messages.unauthorize')], 403);
+            return response()->json(['message' => __('message.unauthorized')], 403);
         }
 
         $user->update([
@@ -289,7 +289,7 @@ class AuthController extends Controller
 
         return response()->json([
             'status'  => 'success',
-            'message' => __('messages.reject'),
+            'message' => __('message.user_rejected'),
             'data'    => new UserResource($user)
         ]);
     }
@@ -300,7 +300,7 @@ class AuthController extends Controller
     public function deleteUser(Request $request, User $user)
     {
         if (!$request->user()->isAdmin()) {
-            return response()->json(['message' => __('messages.unauthorize')], 403);
+            return response()->json(['message' => __('message.unauthorized')], 403);
         }
 
         if ($user->profile_image) {
@@ -311,7 +311,7 @@ class AuthController extends Controller
 
         return response()->json([
             'status'  => 'success',
-            'message' => __('messages.delete')
+            'message' => __('message.user_deleted')
         ]);
     }
 }

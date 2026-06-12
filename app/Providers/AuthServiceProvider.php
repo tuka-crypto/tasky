@@ -3,17 +3,19 @@
 namespace App\Providers;
 
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
-use App\Models\Apartment;
-use App\Models\Booking;
+use App\Models\Project;
 use App\Models\Task;
-use App\Policies\ApartmentPolicy;
-use App\Policies\BookingPolicy;
+use App\Models\Team;
+use App\Policies\ProjectPolicy;
 use App\Policies\TaskPolicy;
+use App\Policies\TeamPolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {
     protected $policies = [
-       Task::class => TaskPolicy::class,
+        Project::class=> ProjectPolicy::class,
+        Team::class=>TeamPolicy::class,
+        Task::class=> TaskPolicy::class,
     ];
 
     public function boot(): void

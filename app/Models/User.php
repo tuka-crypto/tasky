@@ -27,6 +27,7 @@ class User extends Authenticatable
         'gender',
         'role_id',
         'is_approved',
+        'fcm_token',
         'language',
         'theme'
     ];

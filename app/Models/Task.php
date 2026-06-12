@@ -48,6 +48,12 @@ public function blockedBy()
     return $this->hasMany(TaskDependency::class, 'depends_on_task_id');
 }
 
-
-
+public function attachments()
+{
+    return $this->hasMany(TaskAttachment::class);
+}
+public function history()
+{
+    return $this->hasMany(TaskHistory::class);
+}
 }

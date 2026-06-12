@@ -43,7 +43,13 @@ return [
             'provider' => 'users',
         ],
     ],
-
+    
+    'guards' => [
+    'api' => [
+        'driver' => 'sanctum', 
+        'provider' => 'users',
+    ],
+],
     /*
     |--------------------------------------------------------------------------
     | User Providers

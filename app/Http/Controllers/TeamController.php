@@ -20,7 +20,7 @@ class TeamController extends Controller
     $user = $request->user();
 
     if (!$user->isAdmin()) {
-        return response()->json(['message' => __('messages.unauthorize')], 403);
+        return response()->json(['message' => __('message.unauthorized')], 403);
     }
 
     $teams = Team::with(['members' => function ($q) {
@@ -61,7 +61,7 @@ class TeamController extends Controller
      */
     public function update(TeamUpdateRequest $request, Team $team)
     {
-       Gate::authorize('manage',Team::class);
+        Gate::authorize('manage',Team::class);
         $team->update($request->validated());
         return new TeamResource($team);
     }
@@ -75,7 +75,7 @@ class TeamController extends Controller
         $team->members()->detach();
         $team->delete();
 
-        return response()->json(['message' => __('messages.team_deleted')]);
+        return response()->json(['message' => __('message.team_deleted')]);
     }
 
     /**
@@ -84,7 +84,7 @@ class TeamController extends Controller
     public function addMember(UseraddRequest $request, Team $team)
     {
         if ($team->created_by !== $request->user()->id) {
-            return response()->json(['message' => __('messages.unauthorize')], 403);
+            return response()->json(['message' => __('message.unauthorized')], 403);
         }
 
         // Add as pending
@@ -92,7 +92,7 @@ class TeamController extends Controller
             $request->user_id => ['status' => 'pending']
         ]);
 
-        return response()->json(['message' => __('messages.invitation_sent')]);
+        return response()->json(['message' => __('message.invitation_sent')]);
     }
 
     /**
@@ -103,30 +103,30 @@ class TeamController extends Controller
         $user = $request->user();
 
         if (!$team->members->contains($user->id)) {
-            return response()->json(['message' => __('messages.unauthorize')], 403);
+            return response()->json(['message' => __('message.unauthorized')], 403);
         }
 
         $team->members()->updateExistingPivot($user->id, [
             'status' => 'accepted'
         ]);
 
-        return response()->json(['message' => __('messages.invitation_accepted')]);
+        return response()->json(['message' => __('message.invitation_accepted')]);
     }
 
 
-     public function rejectInvitation(Request $request, Team $team)
+    public function rejectInvitation(Request $request, Team $team)
     {
         $user = $request->user();
 
         if (!$team->members->contains($user->id)) {
-            return response()->json(['message' => __('messages.unauthorize')], 403);
+            return response()->json(['message' => __('message.unauthorized')], 403);
         }
 
         $team->members()->updateExistingPivot($user->id, [
             'status' => 'reject'
         ]);
 
-        return response()->json(['message' => __('messages.invitation_rejected')]);
+        return response()->json(['message' => __('message.invitation_rejected')]);
     }
 
     /**
@@ -135,11 +135,11 @@ class TeamController extends Controller
     public function removeMember(Request $request, Team $team)
     {
         if ($team->created_by !== $request->user()->id) {
-            return response()->json(['message' => __('messages.unauthorize')], 403);
+            return response()->json(['message' => __('message.unauthorized')], 403);
         }
 
         $team->members()->detach($request->user_id);
 
-        return response()->json(['message' => __('messages.member_removed')]);
+        return response()->json(['message' => __('message.member_removed')]);
     }
 }

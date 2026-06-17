@@ -1,4 +1,5 @@
 *.log
+app/fcm/fcm.json
 .DS_Store
 .env
 .env.backup

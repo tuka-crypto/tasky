@@ -26,17 +26,21 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 
 class TaskController extends Controller
-{/*
-display all tasks for manager of his projects
-*/
+{
+    /*
+    Display all tasks for manager of his project
+    */
     public function index(Request $request, Project $project)
     {
-        Gate::authorize('create', [Task::class, $project]);
+        Gate::authorize('viewAny', [Task::class, $project]);
+
         $tasks = Task::where('project_id', $project->id)
             ->with(['members', 'tags', 'attachments', 'dependencies', 'history'])
             ->get();
+
         return TaskResource::collection($tasks);
     }
+
     /**
      * Member: list his tasks
      */
@@ -45,72 +49,88 @@ display all tasks for manager of his projects
         $tasks = $request->user()->tasks()
             ->with(['project', 'tags', 'attachments'])
             ->get();
+
         return TaskResource::collection($tasks);
     }
+
     /**
      * Show task details
      */
     public function show(Request $request, Task $task)
     {
         Gate::authorize('view', $task);
+
         return new TaskResource(
             $task->load(['members', 'tags', 'attachments', 'dependencies', 'history', 'project'])
         );
     }
+
     /**
      * Create task (Manager only)
      */
     public function store(TaskstoreRequest $request, Project $project)
     {
         Gate::authorize('create', [Task::class, $project]);
+
         $task = Task::create([
-            'title'       => $request->title,
+            'title' => $request->title,
             'description' => $request->description,
-            'project_id'  => $project->id,
-            'start_date'  => $request->start_date,
-            'end_date'    => $request->end_date,
-            'status'      => 'pending',
-            'priority'    => $request->priority,
+            'project_id' => $project->id,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
+            'status' => 'pending',
+            'priority' => $request->priority,
             'category_id' => $request->category_id,
         ]);
+
         TaskHistory::create([
             'task_id' => $task->id,
             'user_id' => $request->user()->id,
-            'action'  => 'Task created'
+            'action' => 'Task created',
         ]);
+
         return new TaskResource($task);
     }
+
     /**
      * Update task (Manager only)
      */
     public function update(TasksupdateRequest $request, Task $task)
     {
         Gate::authorize('update', $task);
+
         $task->update($request->validated());
+
         TaskHistory::create([
             'task_id' => $task->id,
             'user_id' => $request->user()->id,
-            'action'  => 'Task updated'
+            'action' => 'Task updated',
         ]);
+
         return new TaskResource($task);
     }
+
     /**
      * Delete task (Manager only)
      */
     public function destroy(Request $request, Task $task)
     {
         Gate::authorize('delete', $task);
+
         foreach ($task->attachments as $att) {
-            Storage::disk('public')->delete($att->file_path);
+            Storage::disk('public')->delete($att->file_path ?? '');
         }
+
         $task->members()->detach();
         $task->attachments()->delete();
         $task->tags()->detach();
         $task->dependencies()->delete();
         $task->history()->delete();
         $task->delete();
+
         return response()->json(['message' => __('message.task_deleted')]);
     }
+
     /**
      * Assign members to task (Manager only)
      * Condition: member must have accepted invitation to project
@@ -118,6 +138,7 @@ display all tasks for manager of his projects
     public function assignMembers(AssignMembersRequest $request, Task $task)
     {
         Gate::authorize('assignMembers', $task);
+
         $project = $task->project;
         $validMembers = [];
 
@@ -127,7 +148,7 @@ display all tasks for manager of his projects
             $isAccepted = $member->teams()
                 ->wherePivot('status', 'accepted')
                 ->whereHas('projects', function ($q) use ($project) {
-                    $q->where('project_id', $project->id);
+                    $q->where('projects.id', $project->id);
                 })
                 ->exists();
 
@@ -145,7 +166,7 @@ display all tasks for manager of his projects
         TaskHistory::create([
             'task_id' => $task->id,
             'user_id' => $request->user()->id,
-            'action'  => 'Members assigned'
+            'action' => 'Members assigned',
         ]);
 
         return response()->json(['message' => __('message.members_assigned')]);
@@ -154,96 +175,232 @@ display all tasks for manager of his projects
     /**
      * Member updates task status
      */
-    public function updateStatus(UpdateStatusRequest $request, Task $task,FcmServices $fcmService)
+    public function updateStatus(UpdateStatusRequest $request, Task $task, FcmServices $fcmService)
     {
         Gate::authorize('updateStatus', $task);
+
         $task->update(['status' => $request->status]);
+
         TaskHistory::create([
             'task_id' => $task->id,
             'user_id' => $request->user()->id,
-            'action'  => "Status changed to {$request->status}"
+            'action' => "Status changed to {$request->status}",
         ]);
-        // Performance + Rewards (مثال بسيط)
+
+        // Performance + Rewards
         if ($request->status === 'completed') {
             UserPerformance::create([
                 'user_id' => $request->user()->id,
                 'task_id' => $task->id,
-                'score'   => 10, // مثال
+                'score' => 10,
             ]);
+
             Reward::create([
-                'user_id'     => $request->user()->id,
+                'user_id' => $request->user()->id,
                 'reward_type' => 'task_completed',
-                'points'      => 10,
+                'points' => 10,
             ]);
         }
+
+        // Notification
         Notification::create([
-        'user_id' => $task->project->created_by,
-        'title'   => 'Task status updated',
-        'message' => "Task '{$task->title}' status is now {$request->status}",
-        'is_read' => false,
-    ]);
-    $manager = User::find($task->project->created_by);
-    $tokens = $manager->notificationTokens()->pluck('token')->toArray();
-    $fcmService->sendToUser(
-        $tokens,
-        'Task status updated',
-        "Task '{$task->title}' status is now {$request->status}",
-        ['task_id' => $task->id]
-    );
+            'user_id' => $task->project->created_by,
+            'title' => 'Task status updated',
+            'message' => "Task '{$task->title}' status is now {$request->status}",
+            'is_read' => false,
+        ]);
+
+        // FCM
+        $manager = User::find($task->project->created_by);
+        $tokens = $manager->notificationTokens()->pluck('token')->toArray();
+
+        $fcmService->sendToUser(
+            $tokens,
+            'Task status updated',
+            "Task '{$task->title}' status is now {$request->status}",
+            ['task_id' => $task->id]
+        );
+
         return new TaskResource($task);
     }
 
     /**
-     * Attach file to task (member or manager assigned to task)
+     * Attach file to task
      */
     public function attachFile(attachfileRequest $request, Task $task)
     {
         Gate::authorize('attachFile', $task);
+
         $path = $request->file('file')->store('task_attachments', 'public');
 
         TaskAttachment::create([
-            'task_id'   => $task->id,
+            'task_id' => $task->id,
             'file_name' => $request->file('file')->getClientOriginalName(),
             'file_path' => $path,
         ]);
+
         TaskHistory::create([
             'task_id' => $task->id,
             'user_id' => $request->user()->id,
-            'action'  => 'File attached'
+            'action' => 'File attached',
         ]);
+
         return response()->json(['message' => __('message.file_attached')]);
     }
+
     /**
-     * Add tag to task (Manager only)
+     * Remove attachment
+     */
+    public function removeAttachment(Request $request, Task $task, TaskAttachment $attachment)
+    {
+        Gate::authorize('attachFile', $task);
+
+        if ($attachment->task_id !== $task->id) {
+            return response()->json(['message' => __('message.unauthorized')], 403);
+        }
+
+        Storage::disk('public')->delete($attachment->file_path);
+        $attachment->delete();
+
+        TaskHistory::create([
+            'task_id' => $task->id,
+            'user_id' => $request->user()->id,
+            'action' => 'Attachment removed',
+        ]);
+
+        return response()->json(['message' => __('message.file_removed')]);
+    }
+
+    /**
+     * Add tag to task
      */
     public function addTag(TagRequest $request, Task $task)
     {
         Gate::authorize('addTag', $task);
+
         $tag = Tag::firstOrCreate(['name' => $request->name]);
+
         $task->tags()->syncWithoutDetaching([$tag->id]);
+
         TaskHistory::create([
             'task_id' => $task->id,
             'user_id' => $request->user()->id,
-            'action'  => 'Tag added'
+            'action' => 'Tag added',
         ]);
+
         return response()->json(['message' => __('message.tag_added')]);
     }
+
     /**
-     * Add dependency to task (Manager only)
+     * Remove tag
+     */
+    public function removeTag(Request $request, Task $task, Tag $tag)
+    {
+        Gate::authorize('addTag', $task);
+
+        $task->tags()->detach($tag->id);
+
+        TaskHistory::create([
+            'task_id' => $task->id,
+            'user_id' => $request->user()->id,
+            'action' => 'Tag removed',
+        ]);
+
+        return response()->json(['message' => __('message.tag_removed')]);
+    }
+
+    /**
+     * Add dependency
      */
     public function addDependency(dependencyrequest $request, Task $task)
     {
         Gate::authorize('addDependency', $task);
+
+        if ($request->depends_on_task_id == $task->id) {
+            return response()->json(['message' => __('message.invalid_dependency')], 400);
+        }
+
         TaskDependency::create([
-            'task_id'           => $task->id,
-            'depends_on_task_id'=> $request->depends_on_task_id,
+            'task_id' => $task->id,
+            'depends_on_task_id' => $request->depends_on_task_id,
         ]);
+
         TaskHistory::create([
             'task_id' => $task->id,
             'user_id' => $request->user()->id,
-            'action'  => 'Dependency added'
+            'action' => 'Dependency added',
         ]);
+
         return response()->json(['message' => __('message.dependency_added')]);
     }
-}
 
+    /**
+     * Remove dependency
+     */
+    public function removeDependency(Request $request, Task $task, TaskDependency $dependency)
+    {
+        Gate::authorize('addDependency', $task);
+
+        if ($dependency->task_id !== $task->id) {
+            return response()->json(['message' => __('message.unauthorized')], 403);
+        }
+
+        $dependency->delete();
+
+        TaskHistory::create([
+            'task_id' => $task->id,
+            'user_id' => $request->user()->id,
+            'action' => 'Dependency removed',
+        ]);
+
+        return response()->json(['message' => __('message.dependency_removed')]);
+    }
+
+    /**
+     * Add comment
+     */
+    public function addComment(Request $request, Task $task)
+    {
+        Gate::authorize('comment', $task);
+
+        $comment = $task->comments()->create([
+            'user_id' => $request->user()->id,
+            'comment' => $request->comment,
+        ]);
+
+        TaskHistory::create([
+            'task_id' => $task->id,
+            'user_id' => $request->user()->id,
+            'action' => 'Comment added',
+        ]);
+
+        return response()->json([
+            'message' => __('message.comment_added'),
+            'data' => $comment,
+        ]);
+    }
+
+    /**
+     * Get comments
+     */
+    public function getComments(Task $task)
+    {
+        Gate::authorize('view', $task);
+
+        return response()->json([
+            'data' => $task->comments()->with('user')->latest()->get(),
+        ]);
+    }
+
+    /**
+     * Count tasks in project
+     */
+    public function tasksCount(Project $project)
+    {
+        Gate::authorize('viewAny', [Task::class, $project]);
+
+        $count = Task::where('project_id', $project->id)->count();
+
+        return response()->json(['count' => $count]);
+    }
+}

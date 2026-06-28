@@ -61,13 +61,6 @@ class TaskPolicy
             || $task->project->created_by === $user->id;
     }
     /**
-     * Add tag
-     */
-    public function addTag(User $user, Task $task)
-    {
-        return $user->isManager() && $task->project->created_by === $user->id;
-    }
-    /**
      * Add dependency
      */
     public function addDependency(User $user, Task $task)

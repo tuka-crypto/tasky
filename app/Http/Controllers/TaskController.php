@@ -272,44 +272,6 @@ class TaskController extends Controller
     }
 
     /**
-     * Add tag to task
-     */
-    public function addTag(TagRequest $request, Task $task)
-    {
-        Gate::authorize('addTag', $task);
-
-        $tag = Tag::firstOrCreate(['name' => $request->name]);
-
-        $task->tags()->syncWithoutDetaching([$tag->id]);
-
-        TaskHistory::create([
-            'task_id' => $task->id,
-            'user_id' => $request->user()->id,
-            'action' => 'Tag added',
-        ]);
-
-        return response()->json(['message' => __('message.tag_added')]);
-    }
-
-    /**
-     * Remove tag
-     */
-    public function removeTag(Request $request, Task $task, Tag $tag)
-    {
-        Gate::authorize('addTag', $task);
-
-        $task->tags()->detach($tag->id);
-
-        TaskHistory::create([
-            'task_id' => $task->id,
-            'user_id' => $request->user()->id,
-            'action' => 'Tag removed',
-        ]);
-
-        return response()->json(['message' => __('message.tag_removed')]);
-    }
-
-    /**
      * Add dependency
      */
     public function addDependency(dependencyrequest $request, Task $task)
@@ -355,43 +317,6 @@ class TaskController extends Controller
 
         return response()->json(['message' => __('message.dependency_removed')]);
     }
-
-    /**
-     * Add comment
-     */
-    public function addComment(Request $request, Task $task)
-    {
-        Gate::authorize('comment', $task);
-
-        $comment = $task->comments()->create([
-            'user_id' => $request->user()->id,
-            'comment' => $request->comment,
-        ]);
-
-        TaskHistory::create([
-            'task_id' => $task->id,
-            'user_id' => $request->user()->id,
-            'action' => 'Comment added',
-        ]);
-
-        return response()->json([
-            'message' => __('message.comment_added'),
-            'data' => $comment,
-        ]);
-    }
-
-    /**
-     * Get comments
-     */
-    public function getComments(Task $task)
-    {
-        Gate::authorize('view', $task);
-
-        return response()->json([
-            'data' => $task->comments()->with('user')->latest()->get(),
-        ]);
-    }
-
     /**
      * Count tasks in project
      */

@@ -34,10 +34,6 @@ class Task extends Model
     {
     return $this->belongsToMany(User::class, 'task_members');
     }
-    public function tags()
-    {
-    return $this->belongsToMany(Tag::class, 'task_tags');
-    }
     public function dependencies()
 {
     return $this->hasMany(TaskDependency::class, 'task_id');

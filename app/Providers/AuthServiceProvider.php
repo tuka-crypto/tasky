@@ -26,7 +26,6 @@ class AuthServiceProvider extends ServiceProvider
         Team::class => TeamPolicy::class,
         Task::class => TaskPolicy::class,
         Category::class => CategoryPolicy::class,
-        Tag::class => TagPolicy::class,
         Reward::class => RewardPolicy::class,
         User::class => ReportPolicy::class,
         User::class => DashboardPolicy::class,

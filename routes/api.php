@@ -75,8 +75,6 @@ Route::middleware(['auth:sanctum', 'local'])->group(function () {
             Route::put('/tasks/{task}', [TaskController::class, 'update']);
             Route::delete('/tasks/{task}', [TaskController::class, 'destroy']);
             Route::post('/tasks/{task}/assign-members', [TaskController::class, 'assignMembers']);
-            Route::post('/tasks/{task}/add-tag', [TaskController::class, 'addTag']);
-            Route::delete('/tasks/{task}/tag/{tag}', [TaskController::class, 'removeTag']);
             Route::post('/tasks/{task}/add-dependency', [TaskController::class, 'addDependency']);
             Route::delete('/tasks/{task}/dependency/{dependency}', [TaskController::class, 'removeDependency']);
             Route::get('/projects/{project}/tasks-count', [TaskController::class, 'tasksCount']);
@@ -106,6 +104,7 @@ Route::middleware(['auth:sanctum', 'local'])->group(function () {
             Route::post('/tasks/{task}/status', [TaskController::class, 'updateStatus']);
             // dashboard and reports
             Route::get('/reports/my-performance', [ReportController::class, 'myPerformance']);
+            Route::get('/my-rewards', [RewardController::class, 'myReward']);
         });
         Route::middleware(['auth:sanctum'])->group(function () {
             // projects
@@ -118,8 +117,6 @@ Route::middleware(['auth:sanctum', 'local'])->group(function () {
             Route::get('/tasks/{task}', [TaskController::class, 'show']);
             Route::post('/tasks/{task}/attach-file', [TaskController::class, 'attachFile']);
             Route::delete('/tasks/{task}/file/{attachment}', [TaskController::class, 'removeAttachment']);
-            Route::post('/tasks/{task}/comment', [TaskController::class, 'addComment']);
-            Route::get('/tasks/{task}/comments', [TaskController::class, 'getComments']);
 
             Route::get('/categories', [CategoryController::class, 'index']);
             Route::post('/categories', [CategoryController::class, 'store']);
@@ -128,12 +125,6 @@ Route::middleware(['auth:sanctum', 'local'])->group(function () {
             // Admin + Manager
             Route::get('/rewards', [RewardController::class, 'index']);
             Route::post('/rewards', [RewardController::class, 'store']);
-            // Member
-            Route::get('/my-rewards', [RewardController::class, 'myReward']);
-
-            Route::get('/tags', [TagController::class, 'index']);
-            Route::post('/tags', [TagController::class, 'store']);
-            Route::delete('/tags/{tag}', [TagController::class, 'destroy']);
         });
     });
 });

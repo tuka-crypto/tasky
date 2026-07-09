@@ -31,7 +31,7 @@ class TaskController extends Controller
     */
     public function index(Request $request, Project $project)
     {
-        Gate::authorize('viewAny', [Task::class, $project]);
+        Gate::authorize('create', [Task::class, $project]);
 
         $tasks = Task::where('project_id', $project->id)
             ->with(['members', 'attachments', 'dependencies', 'history'])
@@ -46,7 +46,7 @@ class TaskController extends Controller
     public function myTasks(Request $request)
     {
         $tasks = $request->user()->tasks()
-            ->with(['project', 'tags', 'attachments'])
+            ->with(['project', 'attachments'])
             ->get();
 
         return TaskResource::collection($tasks);
@@ -187,21 +187,6 @@ class TaskController extends Controller
             'user_id' => $request->user()->id,
             'action' => "Status changed to {$request->status}",
         ]);
-
-        // Performance + Rewards
-        if ($request->status === 'done') {
-            UserPerformance::create([
-                'user_id' => $request->user()->id,
-                'task_id' => $task->id,
-                'score' => 10,
-            ]);
-
-            Reward::create([
-                'user_id' => $request->user()->id,
-                'reward_type' => 'task_completed',
-                'points' => 10,
-            ]);
-        }
 
         // Notification
         Notification::create([
@@ -356,18 +341,90 @@ class TaskController extends Controller
     return TaskResource::collection($tasks);
 }
 //manager accept task
-    public function approvedTasks(Task $task){
+    public function approvedTasks(Task $task)
+{
     Gate::authorize('isApproved', $task);
-    $task->update([
-        'is_approved' => true
-    ]);
-    TaskHistory::create([
-        'task_id'=>$task->id,
-        'user_id'=>Auth::user()->id,
-        'action'=>'Task approved'
-]);
-    return response()->json(['message' => __('message.accept_task')]);
+
+    // Task must be completed first
+    if ($task->status !== 'done') {
+        return response()->json([
+            'message' => 'You can only approve completed tasks.'
+        ], 400);
     }
+
+    // Prevent approving the same task twice
+    if ($task->is_approved) {
+        return response()->json([
+            'message' => 'This task has already been approved.'
+        ], 400);
+    }
+
+    // Approve task
+    $task->update([
+        'is_approved' => true,
+    ]);
+
+    // Save history
+    TaskHistory::create([
+        'task_id' => $task->id,
+        'user_id' => Auth::user()->id,
+        'action'  => 'Task approved',
+    ]);
+
+    // Update performance and reward every assigned member
+    foreach ($task->members as $member) {
+
+        // Total approved tasks
+        $totalTasks = $member->tasks()
+            ->where('is_approved', true)
+            ->count();
+
+        // Completed approved tasks
+        $completedTasks = $member->tasks()
+            ->where('status', 'done')
+            ->where('is_approved', true)
+            ->count();
+
+        // Late tasks
+        $lateTasks = $member->tasks()
+            ->where('is_approved', true)
+            ->where('status', '!=', 'done')
+            ->whereDate('end_date', '<', now())
+            ->count();
+
+        // Performance score
+        $score = $totalTasks > 0
+            ? round(($completedTasks / $totalTasks) * 100, 2)
+            : 0;
+
+        // Update performance
+        UserPerformance::updateOrCreate(
+            [
+                'user_id' => $member->id,
+            ],
+            [
+                'total_tasks'      => $totalTasks,
+                'completed_tasks'  => $completedTasks,
+                'late_tasks'       => $lateTasks,
+                'performance_score'=> $score,
+                'calculation_type' => 'auto',
+            ]
+        );
+
+        // Give reward
+        Reward::create([
+            'user_id'       => $member->id,
+            'reward_amount' => 10,
+            'reward_level'  => 'Bronze',
+            'notes'         => 'Task completed successfully',
+        ]);
+    }
+
+    return response()->json([
+        'status' => 'success',
+        'message' => __('message.accept_task'),
+    ]);
+}
 //manager rejected task and task comeback inprogress
     public function rejectTasks(Task $task){
     Gate::authorize('isApproved', $task);

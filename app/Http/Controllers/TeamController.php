@@ -175,9 +175,15 @@ public function addMember(UseraddRequest $request, Team $team)
      */
     public function removeMember(Request $request, Team $team)
     {
-        if ($team->created_by !== $request->user()->id) {
-            return response()->json(['message' => __('message.unauthorized')], 403);
-        }
+    if(
+    !$team->projects()
+        ->where('created_by',$request->user()->id)
+        ->exists()
+){
+    return response()->json([
+        'message'=>__('message.unauthorized')
+    ],403);
+}
         if ($request->user_id == $team->created_by) {
             return response()->json(['message' => __('message.cannot_remove_manager')], 403);
         }

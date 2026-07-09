@@ -23,5 +23,7 @@ class Notification extends Model
     {
     return $this->morphTo();
     }
-
+protected $casts=[
+'is_read'=>'boolean'
+];
 }

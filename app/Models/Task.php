@@ -54,4 +54,9 @@ public function history()
 {
     return $this->hasMany(TaskHistory::class);
 }
+protected $casts=[
+'start_date'=>'date',
+'end_date'=>'date',
+'is_approved'=>'boolean'
+];
 }

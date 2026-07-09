@@ -30,5 +30,8 @@ class Project extends Model
 {
     return $this->hasMany(ProjectHistory::class);
 }
-
+protected $casts=[
+'start_date'=>'date',
+'end_date'=>'date'
+];
 }

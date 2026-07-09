@@ -39,7 +39,7 @@ class ReportController extends Controller
             ->with(['members'])
             ->get();
 
-        $completed = $tasks->where('status', 'done')->count();
+        $completed = $tasks->where('status', 'done')->where('is_approved', true)->count();
         $total = $tasks->count();
 
         return response()->json([
@@ -96,7 +96,7 @@ class ReportController extends Controller
 
         return $users->map(function ($user) {
             $total = $user->tasks->count();
-            $completed = $user->tasks->where('status', 'done')->count();
+            $completed = $user->tasks->where('status', 'done')->where('is_approved', true)->count();
 
             return [
                 'user' => $user->first_name.' '.$user->last_name,

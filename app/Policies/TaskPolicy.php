@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
 
@@ -17,6 +18,11 @@ class TaskPolicy
         }
         return false;
     }
+    public function viewAny(User $user, Project $project)
+{
+    return $user->isManager()
+        && $project->created_by == $user->id;
+}
     
     /**
      * Create task inside project
@@ -51,14 +57,14 @@ class TaskPolicy
      */
     public function updateStatus(User $user, Task $task)
     {
-        return $task->members->contains($user->id);
+        return $task->members()->whereKey($user->id)->exists();
     }
     /**
      * Attach file (manager or assigned member)
      */
     public function attachFile(User $user, Task $task)
     {
-        return $task->members->contains($user->id)
+        return $task->members->exists($user->id)
             || $task->project->created_by === $user->id;
     }
     /**

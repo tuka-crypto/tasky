@@ -24,7 +24,7 @@ class DashboardController extends Controller
         $tasks = Task::whereHas('project', fn ($q) => $q->where('created_by', $manager->id)
         )->count();
 
-        $completed = Task::where('status', 'done')
+        $completed = Task::where('status', 'done')->where('is_approved', true)
             ->whereHas('project', fn ($q) => $q->where('created_by', $manager->id)
             )->count();
 
@@ -47,7 +47,7 @@ class DashboardController extends Controller
 
         $totalProjects = Project::count();
         $totalTasks = Task::count();
-        $completed = Task::where('status', 'completed')->count();
+        $completed = Task::where('status', 'done')->where('is_approved', true)->count();
         $users = User::count();
 
         return response()->json([
@@ -67,7 +67,7 @@ class DashboardController extends Controller
         $user = $request->user();
 
         $total = $user->tasks()->count();
-        $completed = $user->tasks()->where('status', 'completed')->count();
+        $completed =Task::where('status', 'done')->where('is_approved', true)->count();
 
         return response()->json([
             'progress' => $total ? round(($completed / $total) * 100) : 0,
@@ -83,7 +83,7 @@ class DashboardController extends Controller
 
         $total = Task::where('project_id', $project->id)->count();
         $completed = Task::where('project_id', $project->id)
-            ->where('status', 'completed')
+            ->where('status', 'done')->where('is_approved', true)
             ->count();
 
         return response()->json([
@@ -91,4 +91,47 @@ class DashboardController extends Controller
             'progress' => $total ? round(($completed / $total) * 100) : 0,
         ]);
     }
+    public function membersProgress(Request $request)
+{
+    $manager = $request->user();
+
+    if (!$manager->isManager()) {
+        return response()->json([
+            'message' => __('message.unauthorized')
+        ], 403);
+    }
+
+    $members = User::whereHas('tasks.project', function ($q) use ($manager) {
+        $q->where('created_by', $manager->id);
+    })->get();
+
+    $data = [];
+
+    foreach ($members as $member) {
+
+        $tasks = $member->tasks()
+            ->whereHas('project', function ($q) use ($manager) {
+                $q->where('created_by', $manager->id);
+            });
+
+        $total = $tasks->count();
+
+        $completed = $tasks
+            ->where('status', 'done')
+            ->where('is_approved', true)
+            ->count();
+
+        $data[] = [
+            'user_id' => $member->id,
+            'name' => $member->first_name . ' ' . $member->last_name,
+            'total_tasks' => $total,
+            'completed_tasks' => $completed,
+            'progress' => $total
+                ? round(($completed / $total) * 100)
+                : 0,
+        ];
+    }
+
+    return response()->json($data);
+}
 }

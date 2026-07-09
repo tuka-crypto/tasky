@@ -43,7 +43,9 @@ class Projectcontroller extends Controller
         ]);
         // Attach teams (one or more)
         if ($request->teams) {
-            $project->teams()->sync($request->teams);
+            $validTeams = Team::whereIn('id',$request->teams)
+    ->pluck('id');
+    $project->teams()->sync($validTeams);
         }
 
         return response()->json([
@@ -58,7 +60,8 @@ class Projectcontroller extends Controller
      */
     public function show(string $id)
     {
-        $project = Project::with('teams')->find($id);
+        $project = Project::with('teams')->findOrFail($id);
+        Gate::authorize('view',$project);
         if (! $project) {
             return response()->json(['message' => __('message.project_not_found')], 404);
         }
@@ -169,4 +172,53 @@ class Projectcontroller extends Controller
             'data' => $teams,
         ]);
     }
+    public function filterProjects(Request $request)
+{
+    if (!$request->user()->isManager()) {
+        return response()->json([
+            'message' => __('message.unauthorized')
+        ], 403);
+    }
+
+    $status = $request->status;
+
+    $projects = Project::where('created_by', $request->user()->id)
+        ->with('tasks')
+        ->get()
+        ->filter(function ($project) use ($status) {
+
+            $tasks = $project->tasks;
+
+            if ($tasks->isEmpty()) {
+                return false;
+            }
+
+            switch ($status) {
+
+                case 'completed':
+                    return $tasks->every(function ($task) {
+                        return $task->status == 'done'
+                            && $task->is_approved;
+                    });
+
+                case 'in_progress':
+                    return $tasks->contains(function ($task) {
+                        return in_array($task->status, [
+                            'in_progress',
+                            'review'
+                        ]);
+                    });
+
+                case 'not_started':
+                    return $tasks->every(function ($task) {
+                        return $task->status == 'todo';
+                    });
+
+                default:
+                    return true;
+            }
+        });
+
+    return ProjectResource::collection($projects);
+}
 }

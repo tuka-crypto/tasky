@@ -72,6 +72,7 @@ Route::middleware(['auth:sanctum', 'local'])->group(function () {
             // tasks
             Route::get('/projects/{project}/tasks', [TaskController::class, 'projectTasks']);
             Route::post('/projects/{project}/tasks', [TaskController::class, 'store']);
+            Route::get('/projects/filter', [ProjectController::class,'filterProjects']);
             Route::put('/tasks/{task}', [TaskController::class, 'update']);
             Route::delete('/tasks/{task}', [TaskController::class, 'destroy']);
             Route::post('/tasks/{task}/assign-members', [TaskController::class, 'assignMembers']);
@@ -90,6 +91,7 @@ Route::middleware(['auth:sanctum', 'local'])->group(function () {
             Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
             Route::get('/dashboard/progress', [DashboardController::class, 'userProgress']);
             Route::get('/dashboard/project/{project}/progress', [DashboardController::class, 'taskProgress']);
+            Route::get('/dashboard/members-progress', [DashboardController::class, 'membersProgress']);
             Route::get('/reports/user/{user}', [ReportController::class, 'userReport']);
             Route::get('/reports/project/{project}', [ReportController::class, 'projectReport']);
             Route::get('/reports/performance/{user}', [ReportController::class, 'userPerformance']);

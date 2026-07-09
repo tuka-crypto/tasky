@@ -24,7 +24,7 @@ class DashboardController extends Controller
         $tasks = Task::whereHas('project', fn ($q) => $q->where('created_by', $manager->id)
         )->count();
 
-        $completed = Task::where('status', 'completed')
+        $completed = Task::where('status', 'done')
             ->whereHas('project', fn ($q) => $q->where('created_by', $manager->id)
             )->count();
 

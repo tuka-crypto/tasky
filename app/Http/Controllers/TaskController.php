@@ -78,7 +78,7 @@ class TaskController extends Controller
 'start_date'=>$request->start_date,
 'end_date'=>$request->end_date,
 'priority'=>$request->priority,
-'status'=>'pending',
+'status'=>'todo',
 'category_id'=>$request->category_id,
 'created_by'=>$request->user()->id,
 ]);
@@ -189,7 +189,7 @@ class TaskController extends Controller
         ]);
 
         // Performance + Rewards
-        if ($request->status === 'completed') {
+        if ($request->status === 'done') {
             UserPerformance::create([
                 'user_id' => $request->user()->id,
                 'task_id' => $task->id,
@@ -345,7 +345,7 @@ class TaskController extends Controller
         'message'=>__('message.unauthorized')
     ],403);
 }
-    $tasks = Task::where('status', 'completed')
+    $tasks = Task::where('status', 'done')
                 ->whereHas('project', function ($q) use ($manager) {
                     $q->where('created_by', $manager->id);
                 })

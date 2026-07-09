@@ -39,7 +39,6 @@ class TeamController extends Controller
         Gate::authorize('create', Team::class);
         $team = Team::create([
             'name' => $request->name,
-            'created_by' => $request->user()->id,
         ]);
 
         return new TeamResource($team);

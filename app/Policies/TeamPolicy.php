@@ -15,6 +15,10 @@ class TeamPolicy
         return $user->isManager() && $team->created_by === $user->id;
     }
 
+    public function create(User $user)
+    {
+        return $user->isManager();
+    }
     public function view(User $user, Team $team)
     {
         if ($user->isManager()) {

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('user_performance', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade')->unique();
             $table->integer('completed_tasks')->default(0);
             $table->integer('late_tasks')->default(0);
             $table->integer('total_tasks')->default(0);

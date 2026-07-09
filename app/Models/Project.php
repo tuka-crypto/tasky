@@ -18,10 +18,6 @@ class Project extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
-    public function members()
-    {
-    return $this->belongsToMany(User::class, 'project_members');
-    }
     public function tasks()
     {
     return $this->hasMany(Task::class);
@@ -30,6 +26,9 @@ class Project extends Model
     {
     return $this->belongsToMany(Team::class, 'project_team');
     }
-
+    public function history()
+{
+    return $this->hasMany(ProjectHistory::class);
+}
 
 }

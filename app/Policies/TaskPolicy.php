@@ -17,6 +17,7 @@ class TaskPolicy
         }
         return false;
     }
+    
     /**
      * Create task inside project
      */
@@ -64,6 +65,15 @@ class TaskPolicy
      * Add dependency
      */
     public function addDependency(User $user, Task $task)
+    {
+        return $user->isManager() && $task->project->created_by === $user->id;
+    }
+
+    public function isApproved(User $user, Task $task)
+    {
+        return $user->isManager() && $task->project->created_by === $user->id;
+    }
+    public function showCompletedTask(User $user, Task $task)
     {
         return $user->isManager() && $task->project->created_by === $user->id;
     }

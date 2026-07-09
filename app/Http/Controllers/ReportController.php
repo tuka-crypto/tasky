@@ -36,7 +36,7 @@ class ReportController extends Controller
         Gate::authorize('view', $project);
 
         $tasks = Task::where('project_id', $project->id)
-            ->with(['members', 'tags'])
+            ->with(['members'])
             ->get();
 
         $completed = $tasks->where('status', 'completed')->count();

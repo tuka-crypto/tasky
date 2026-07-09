@@ -7,6 +7,7 @@ use App\Http\Requests\TeamUpdateRequest;
 use App\Http\Requests\UseraddRequest;
 use App\Http\Resources\TeamResource;
 use App\Models\Team;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
@@ -35,7 +36,7 @@ class TeamController extends Controller
      */
     public function store(TeamStoreRequest $request)
     {
-        Gate::authorize('manage', Team::class);
+        Gate::authorize('create', Team::class);
         $team = Team::create([
             'name' => $request->name,
             'created_by' => $request->user()->id,
@@ -50,7 +51,7 @@ class TeamController extends Controller
     public function show(Request $request, Team $team)
     {
         $user = $request->user();
-        Gate::authorize('view', Team::class);
+        Gate::authorize('view', $team);
 
         return new TeamResource($team->load(['members' => function ($q) {
             $q->wherePivot('status', 'accepted');
@@ -62,7 +63,7 @@ class TeamController extends Controller
      */
     public function update(TeamUpdateRequest $request, Team $team)
     {
-        Gate::authorize('manage', Team::class);
+        Gate::authorize('manage', $team);
         $team->update($request->validated());
 
         return new TeamResource($team);
@@ -73,7 +74,7 @@ class TeamController extends Controller
      */
     public function destroy(Request $request, Team $team)
     {
-        Gate::authorize('manage', Team::class);
+        Gate::authorize('manage', $team);
         $team->members()->detach();
         $team->delete();
 
@@ -83,21 +84,38 @@ class TeamController extends Controller
     /**
      * Manager sends invitation to member
      */
-    public function addMember(UseraddRequest $request, Team $team)
-    {
-        if ($team->created_by !== $request->user()->id) {
-            return response()->json(['message' => __('message.unauthorized')], 403);
-        }
+public function addMember(UseraddRequest $request, Team $team)
+{
+    // السماح فقط لمدير هذا الفريق
+    Gate::authorize('manage', $team);
 
-        // Prevent duplicate invitations
-        if ($team->members()->where('user_id', $request->user_id)->exists()) {
-            return response()->json(['message' => __('message.already_invited')], 409);
-        }
+    // التأكد أن المستخدم موجود
+    $user = User::findOrFail($request->user_id);
 
-        $team->members()->attach($request->user_id, ['status' => 'pending']);
-
-        return response()->json(['message' => __('message.invitation_sent')]);
+    // التأكد أن المستخدم Member فقط
+    if (! $user->isMember()) {
+        return response()->json([
+            'message' => __('message.invalid_member')
+        ], 403);
     }
+
+    // منع إرسال دعوة لنفس المستخدم أكثر من مرة
+    if ($team->members()->where('user_id', $user->id)->exists()) {
+        return response()->json([
+            'message' => __('message.already_invited')
+        ], 409);
+    }
+
+    // إرسال الدعوة
+    $team->members()->attach($user->id, [
+        'status' => 'pending'
+    ]);
+
+    return response()->json([
+        'status'  => 'success',
+        'message' => __('message.invitation_sent')
+    ], 201);
+}
 
     // all invitation
     public function allInvitation(Request $request)
@@ -148,9 +166,7 @@ class TeamController extends Controller
             return response()->json(['message' => __('message.unauthorized')], 403);
         }
 
-        $team->members()->updateExistingPivot($user->id, [
-            'status' => 'reject',
-        ]);
+        $team->members()->detach($user->id);
 
         return response()->json(['message' => __('message.invitation_rejected')]);
     }

@@ -19,7 +19,7 @@ return new class extends Migration
         $table->enum('priority', ['low', 'medium', 'high'])->default('medium');
         $table->date('start_date')->nullable();
         $table->date('end_date')->nullable();
-
+        $table->boolean('is_approved')->default(false);
         $table->unsignedBigInteger('project_id');
         $table->unsignedBigInteger('created_by');
 

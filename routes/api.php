@@ -78,6 +78,9 @@ Route::middleware(['auth:sanctum', 'local'])->group(function () {
             Route::post('/tasks/{task}/add-dependency', [TaskController::class, 'addDependency']);
             Route::delete('/tasks/{task}/dependency/{dependency}', [TaskController::class, 'removeDependency']);
             Route::get('/projects/{project}/tasks-count', [TaskController::class, 'tasksCount']);
+            Route::get('/completed_tasks', [TaskController::class, 'completedTasks']);
+            Route::post('/tasks/{task}/accept', [TaskController::class, 'approvedTasks']);
+            Route::post('/tasks/{task}/reject', [TaskController::class, 'rejectTasks']);
             // history
             Route::get('/projects/{project}/history', [HistoryController::class, 'projectIndex']);
             Route::get('/project-history/{log}', [HistoryController::class, 'projectLog']);

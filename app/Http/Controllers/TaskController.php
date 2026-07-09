@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\AssignMembersRequest;
 use App\Http\Requests\attachfileRequest;
 use App\Http\Requests\dependencyrequest;
-use App\Http\Requests\TagRequest;
 use App\Http\Requests\TaskstoreRequest;
 use App\Http\Requests\TasksupdateRequest;
 use App\Http\Requests\UpdateStatusRequest;
@@ -13,7 +12,6 @@ use App\Http\Resources\TaskResource;
 use App\Models\Notification;
 use App\Models\Project;
 use App\Models\Reward;
-use App\Models\Tag;
 use App\Models\Task;
 use App\Models\TaskAttachment;
 use App\Models\TaskDependency;
@@ -22,6 +20,7 @@ use App\Models\User;
 use App\Models\UserPerformance;
 use App\Services\FcmServices;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 
@@ -35,7 +34,7 @@ class TaskController extends Controller
         Gate::authorize('viewAny', [Task::class, $project]);
 
         $tasks = Task::where('project_id', $project->id)
-            ->with(['members', 'tags', 'attachments', 'dependencies', 'history'])
+            ->with(['members', 'attachments', 'dependencies', 'history'])
             ->get();
 
         return TaskResource::collection($tasks);
@@ -61,7 +60,7 @@ class TaskController extends Controller
         Gate::authorize('view', $task);
 
         return new TaskResource(
-            $task->load(['members', 'tags', 'attachments', 'dependencies', 'history', 'project'])
+            $task->load(['members', 'attachments', 'dependencies', 'history', 'project'])
         );
     }
 
@@ -73,15 +72,16 @@ class TaskController extends Controller
         Gate::authorize('create', [Task::class, $project]);
 
         $task = Task::create([
-            'title' => $request->title,
-            'description' => $request->description,
-            'project_id' => $project->id,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
-            'status' => 'pending',
-            'priority' => $request->priority,
-            'category_id' => $request->category_id,
-        ]);
+'title'=>$request->title,
+'description'=>$request->description,
+'project_id'=>$project->id,
+'start_date'=>$request->start_date,
+'end_date'=>$request->end_date,
+'priority'=>$request->priority,
+'status'=>'pending',
+'category_id'=>$request->category_id,
+'created_by'=>$request->user()->id,
+]);
 
         TaskHistory::create([
             'task_id' => $task->id,
@@ -123,7 +123,6 @@ class TaskController extends Controller
 
         $task->members()->detach();
         $task->attachments()->delete();
-        $task->tags()->detach();
         $task->dependencies()->delete();
         $task->history()->delete();
         $task->delete();
@@ -144,7 +143,9 @@ class TaskController extends Controller
 
         foreach ($request->members as $memberId) {
             $member = User::find($memberId);
-
+            if(!$member){
+                continue;
+                }
             $isAccepted = $member->teams()
                 ->wherePivot('status', 'accepted')
                 ->whereHas('projects', function ($q) use ($project) {
@@ -234,10 +235,13 @@ class TaskController extends Controller
         $path = $request->file('file')->store('task_attachments', 'public');
 
         TaskAttachment::create([
-            'task_id' => $task->id,
-            'file_name' => $request->file('file')->getClientOriginalName(),
-            'file_path' => $path,
-        ]);
+'task_id'=>$task->id,
+'uploaded_by'=>$request->user()->id,
+'file_name'=>$request->file('file')->getClientOriginalName(),
+'file_path'=>$path,
+'file_type'=>$request->file('file')->getMimeType(),
+'file_size'=>$request->file('file')->getSize(),
+]);
 
         TaskHistory::create([
             'task_id' => $task->id,
@@ -277,7 +281,11 @@ class TaskController extends Controller
     public function addDependency(dependencyrequest $request, Task $task)
     {
         Gate::authorize('addDependency', $task);
+        $depends=Task::findOrFail($request->depends_on_task_id);
 
+        if($depends->project_id!=$task->project_id){
+            return response()->json(['message' => __('message.invalid_dependency')], 400);
+        }
         if ($request->depends_on_task_id == $task->id) {
             return response()->json(['message' => __('message.invalid_dependency')], 400);
         }
@@ -327,5 +335,51 @@ class TaskController extends Controller
         $count = Task::where('project_id', $project->id)->count();
 
         return response()->json(['count' => $count]);
+    }
+//manager show all completed tasks in his project
+    public function completedTasks(Request $request)
+    {
+    $manager = $request->user();
+    if(!$manager->isManager()){
+    return response()->json([
+        'message'=>__('message.unauthorized')
+    ],403);
+}
+    $tasks = Task::where('status', 'completed')
+                ->whereHas('project', function ($q) use ($manager) {
+                    $q->where('created_by', $manager->id);
+                })
+                ->with(['project', 'members'])
+                ->latest()
+                ->get();
+
+    return TaskResource::collection($tasks);
+}
+//manager accept task
+    public function approvedTasks(Task $task){
+    Gate::authorize('isApproved', $task);
+    $task->update([
+        'is_approved' => true
+    ]);
+    TaskHistory::create([
+        'task_id'=>$task->id,
+        'user_id'=>Auth::user()->id,
+        'action'=>'Task approved'
+]);
+    return response()->json(['message' => __('message.accept_task')]);
+    }
+//manager rejected task and task comeback inprogress
+    public function rejectTasks(Task $task){
+    Gate::authorize('isApproved', $task);
+    $task->update([
+        'is_approved' => false,
+        'status'      => 'in_progress'
+    ]);
+    TaskHistory::create([
+        'task_id'=>$task->id,
+        'user_id'=>Auth::user()->id,
+        'action'=>'Task rejected'
+]);
+    return response()->json(['message' => __('message.reject_task')]);
     }
 }

@@ -19,7 +19,7 @@ class HistoryController extends Controller
         Gate::authorize('view', $project);
 
         $logs = ProjectHistory::where('project_id', $project->id)
-            ->with('user:id,name')
+            ->with('user:id,first_name,last_name')
             ->latest()
             ->get();
 
@@ -38,7 +38,7 @@ class HistoryController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'data' => $log->load('user:id,name'),
+            'data' => $log->load('user:id,first_name,last_name'),
         ]);
     }
 
@@ -50,7 +50,7 @@ class HistoryController extends Controller
         Gate::authorize('view', $task);
 
         $logs = TaskHistory::where('task_id', $task->id)
-            ->with('user:id,name')
+            ->with('user:id,first_name,last_name')
             ->latest()
             ->get();
 
@@ -69,7 +69,7 @@ class HistoryController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'data' => $log->load('user:id,name'),
+            'data' => $log->load('user:id,first_name,last_name'),
         ]);
     }
 }

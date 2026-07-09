@@ -74,9 +74,9 @@ class Projectcontroller extends Controller
      */
     public function update(ProjectupdateRequest $request, Project $project)
     {
-        Gate::authorize('update', Project::class);
+        Gate::authorize('update',$project);
         $project->update($request->validated());
-        if ($request->teams) {
+        if($request->has('teams')) {
             $project->teams()->sync($request->teams);
         }
 
@@ -92,10 +92,7 @@ class Projectcontroller extends Controller
      */
     public function destroy(Project $project, Request $request)
     {
-        Gate::authorize('delete', Project::class);
-        if ($project->created_by !== $request->user()->id) {
-            return response()->json(['message' => __('message.unauthorized')], 403);
-        }
+        Gate::authorize('delete', $project);
         $project->teams()->detach();
         $project->delete();
 
@@ -123,7 +120,7 @@ class Projectcontroller extends Controller
 
     public function search(Request $request)
     {
-        if (! $request->user()->isManager() && ! $request->user()->isAdmin()) {
+        if (! $request->user()->isManager()) {
             return response()->json(['message' => __('message.unauthorized')], 403);
         }
 

@@ -13,8 +13,10 @@ class Task extends Model
         'priority',
         'start_date',
         'end_date',
+        'is_approved',
         'project_id',
         'created_by',
+        'category_id',
     ];
 
     public function category()

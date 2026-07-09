@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Models\Project;
 use App\Models\User;
 
 class ProjectPolicy
@@ -13,12 +14,12 @@ class ProjectPolicy
         {
             return $user->role_id === 2; // Only manager can create projects
         }
-        public function update(User $user): bool
+        public function update(User $user, Project $project)
         {
-            return $user->role_id === 2; // Only manager can update projects
+    return $user->id == $project->created_by;
         }
-        public function delete(User $user): bool
+        public function delete(User $user, Project $project)
         {
-            return $user->role_id === 2; // Only manager can delete projects
+    return $user->id == $project->created_by;
         }
 }

@@ -53,11 +53,6 @@ class User extends Authenticatable
     {
     return $this->belongsToMany(Team::class, 'team_members');
     }
-
-    public function projects()
-    {
-    return $this->belongsToMany(Project::class, 'project_members');
-    }
     public function createdProjects()
     {
     return $this->hasMany(Project::class, 'created_by');
@@ -78,7 +73,22 @@ class User extends Authenticatable
     {
     return $this->hasMany(Reward::class);
     }
-
+    public function notifications()
+{
+    return $this->hasMany(Notification::class);
+}
+public function taskHistory()
+{
+    return $this->hasMany(TaskHistory::class);
+}
+public function projectHistory()
+{
+    return $this->hasMany(ProjectHistory::class);
+}
+public function attachments()
+{
+    return $this->hasMany(TaskAttachment::class, 'uploaded_by');
+}
 
 
 

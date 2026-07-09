@@ -14,6 +14,8 @@ class UserPerformance extends Model
         'late_tasks',
         'total_tasks',
         'performance_score',
+        'streak_days',
+        'calculation_type'
     ];
 
     public function user()

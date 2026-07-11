@@ -92,6 +92,9 @@ Route::middleware(['auth:sanctum', 'local'])->group(function () {
             Route::get('/dashboard/progress', [DashboardController::class, 'userProgress']);
             Route::get('/dashboard/project/{project}/progress', [DashboardController::class, 'taskProgress']);
             Route::get('/dashboard/members-progress', [DashboardController::class, 'membersProgress']);
+            Route::get('/dashboard/overdue-tasks', [DashboardController::class, 'overdueTasks']);
+            Route::get('/dashboard/upcoming-deadlines', [DashboardController::class, 'upcomingDeadlines']);
+            Route::get('/dashboard/recent-activities', [DashboardController::class, 'recentActivities']);
             Route::get('/reports/user/{user}', [ReportController::class, 'userReport']);
             Route::get('/reports/project/{project}', [ReportController::class, 'projectReport']);
             Route::get('/reports/performance/{user}', [ReportController::class, 'userPerformance']);

@@ -23,3 +23,4 @@ class MemberMiddleware
         return $next($request);
     }
 }
+

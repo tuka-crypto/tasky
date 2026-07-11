@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\TaskResource;
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\TaskHistory;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -133,5 +135,61 @@ class DashboardController extends Controller
     }
 
     return response()->json($data);
+}
+public function overdueTasks(Request $request)
+{
+    $manager = $request->user();
+
+    Gate::authorize('managerStats', $manager);
+
+    $tasks = Task::whereHas('project', function ($q) use ($manager) {
+            $q->where('created_by', $manager->id);
+        })
+        ->whereDate('end_date', '<', now())
+        ->where('status', '!=', 'done')
+        ->with(['project', 'members'])
+        ->latest()
+        ->get();
+
+    return TaskResource::collection($tasks);
+}
+public function upcomingDeadlines(Request $request)
+{
+    $manager = $request->user();
+
+    Gate::authorize('managerStats', $manager);
+
+    $tasks = Task::whereHas('project', function ($q) use ($manager) {
+            $q->where('created_by', $manager->id);
+        })
+        ->whereBetween('end_date', [
+            now(),
+            now()->addDays(3)
+        ])
+        ->where('status', '!=', 'done')
+        ->orderBy('end_date')
+        ->with(['project', 'members'])
+        ->get();
+
+    return TaskResource::collection($tasks);
+}
+public function recentActivities(Request $request)
+{
+    $manager = $request->user();
+
+    Gate::authorize('managerStats', $manager);
+
+    $activities = TaskHistory::whereHas('task.project', function ($q) use ($manager) {
+            $q->where('created_by', $manager->id);
+        })
+        ->with([
+            'user:id,first_name,last_name',
+            'task:id,title'
+        ])
+        ->latest()
+        ->take(20)
+        ->get();
+
+    return response()->json($activities);
 }
 }

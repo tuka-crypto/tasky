@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ProjectstoreRequest;
 use App\Http\Requests\ProjectupdateRequest;
 use App\Http\Resources\ProjectResource;
+use App\Http\Resources\TeamListResource;
 use App\Models\Project;
 use App\Models\Team;
 use Illuminate\Http\Request;
@@ -158,20 +159,30 @@ class Projectcontroller extends Controller
     }
 
     public function myteams(Request $request)
-    {
-        if (! $request->user()->isManager()) {
-            return response()->json(['message' => __('message.unauthorized')], 403);
-        }
-
-        $teams = Team::whereHas('projects', function ($q) use ($request) {
-            $q->where('created_by', $request->user()->id);
-        })->with('projects')->get();
-
+{
+    if (!$request->user()->isManager()) {
         return response()->json([
-            'status' => 'success',
-            'data' => $teams,
-        ]);
+            'message' => __('message.unauthorized')
+        ], 403);
     }
+
+    $teams = Team::whereHas('projects', function ($q) use ($request) {
+            $q->where('created_by', $request->user()->id);
+        })
+        ->with([
+            'projects',
+            'members' => function ($q) {
+                $q->wherePivot('status', 'accepted');
+            }
+        ])
+        ->get();
+
+    return response()->json([
+        'status' => 'success',
+        'data' => TeamListResource::collection($teams),
+    ]);
+}
+
     public function filterProjects(Request $request)
 {
     if (!$request->user()->isManager()) {

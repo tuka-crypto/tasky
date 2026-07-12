@@ -48,15 +48,18 @@ class TeamController extends Controller
      * Show team (Manager sees his team, Member sees teams he belongs to)
      */
     public function show(Request $request, Team $team)
-    {
-        $user = $request->user();
-        Gate::authorize('view', $team);
+{
+    Gate::authorize('view', $team);
 
-        return new TeamResource($team->load(['members' => function ($q) {
-            $q->wherePivot('status', 'accepted');
-        }]));
-    }
-
+    return new TeamResource(
+        $team->load([
+            'members' => function ($q) {
+                $q->wherePivot('status', 'accepted');
+            },
+            'projects'
+        ])
+    );
+}
     /**
      * Update team
      */

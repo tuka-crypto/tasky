@@ -5,6 +5,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PersonalTaskController;
 use App\Http\Controllers\Projectcontroller;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RewardController;
@@ -133,6 +134,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
             // Admin + Manager
             Route::get('/rewards', [RewardController::class, 'index']);
             Route::post('/rewards', [RewardController::class, 'store']);
+            // personal task
+            Route::get('/personal-tasks', [PersonalTaskController::class, 'index']);
+            Route::post('/personal-tasks', [PersonalTaskController::class, 'store']);
+            Route::get('/personal-tasks/{task}', [PersonalTaskController::class, 'show']);
+            Route::put('/personal-tasks/{task}', [PersonalTaskController::class, 'update']);
+            Route::delete('/personal-tasks/{task}', [PersonalTaskController::class, 'destroy']);
+            Route::post('/personal-tasks/{task}/status', [PersonalTaskController::class, 'updateStatus']);
+            Route::get('/personal-tasks/filter', [PersonalTaskController::class, 'filter']);
+            Route::get('/personal-tasks/count',[PersonalTaskController::class,'count']);
         });
     });
 });

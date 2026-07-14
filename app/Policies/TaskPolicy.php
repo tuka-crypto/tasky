@@ -83,5 +83,26 @@ class TaskPolicy
     {
         return $user->isManager() && $task->project->created_by === $user->id;
     }
+    /**
+ * Personal Tasks
+ */
+
+public function viewPersonal(User $user, Task $task): bool
+{
+    return $task->created_by == $user->id
+        && $task->project_id == null;
+}
+
+public function updatePersonal(User $user, Task $task): bool
+{
+    return $task->created_by == $user->id
+        && $task->project_id == null;
+}
+
+public function deletePersonal(User $user, Task $task): bool
+{
+    return $task->created_by == $user->id
+        && $task->project_id == null;
+}
 }
 

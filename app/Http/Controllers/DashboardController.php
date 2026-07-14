@@ -48,8 +48,11 @@ class DashboardController extends Controller
         Gate::authorize('adminStats', $admin);
 
         $totalProjects = Project::count();
-        $totalTasks = Task::count();
-        $completed = Task::where('status', 'done')->where('is_approved', true)->count();
+        $totalTasks = Task::whereNotNull('project_id')->count();
+        $completed = Task::whereNotNull('project_id')
+    ->where('status', 'done')
+    ->where('is_approved', true)
+    ->count();
         $users = User::count();
 
         return response()->json([
@@ -68,8 +71,15 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
-        $total = $user->tasks()->count();
-        $completed =Task::where('status', 'done')->where('is_approved', true)->count();
+        $total = $user->tasks()
+    ->whereNotNull('project_id')
+    ->count();
+
+        $completed = $user->tasks()
+    ->whereNotNull('project_id')
+    ->where('status', 'done')
+    ->where('is_approved', true)
+    ->count();
 
         return response()->json([
             'progress' => $total ? round(($completed / $total) * 100) : 0,

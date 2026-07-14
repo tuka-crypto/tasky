@@ -59,4 +59,8 @@ protected $casts=[
 'end_date'=>'date',
 'is_approved'=>'boolean'
 ];
+public function owner()
+{
+    return $this->belongsTo(User::class,'owner_id');
+}
 }

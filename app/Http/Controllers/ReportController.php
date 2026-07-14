@@ -22,7 +22,10 @@ class ReportController extends Controller
 
         return response()->json([
             'user' => $user->first_name.' '.$user->last_name,
-            'tasks' => TaskResource::collection($user->tasks()->with('project')->get()),
+            'tasks' => TaskResource::collection($user->tasks()
+                    ->whereNotNull('project_id')
+                    ->with('project')
+                    ->get()),
             'performance' => UserPerformance::where('user_id', $user->id)->get(),
             'rewards' => Reward::where('user_id', $user->id)->get(),
         ]);
@@ -95,8 +98,15 @@ class ReportController extends Controller
         $users = User::with('tasks')->get();
 
         return $users->map(function ($user) {
-            $total = $user->tasks->count();
-            $completed = $user->tasks->where('status', 'done')->where('is_approved', true)->count();
+            $total = $user->tasks
+    ->whereNotNull('project_id')
+    ->count();
+
+            $completed = $user->tasks
+    ->whereNotNull('project_id')
+    ->where('status', 'done')
+    ->where('is_approved', true)
+    ->count();
 
             return [
                 'user' => $user->first_name.' '.$user->last_name,

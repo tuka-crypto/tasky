@@ -18,10 +18,13 @@ class TaskResource extends JsonResource
             'start_date'  => $this->start_date,
             'end_date'    => $this->end_date,
             'is_approved' => $this->is_approved,
-            'project'     => [
-                'id'    => $this->project->id,
-                'title' => $this->project->title,
-            ],
+            'is_personal' => $this->project_id === null,
+            'project' => $this->project
+    ? [
+        'id' => $this->project->id,
+        'title' => $this->project->title,
+    ]
+    : null,
             'members'     => $this->members->map(function ($m) {
                 return [
                     'id'    => $m->id,

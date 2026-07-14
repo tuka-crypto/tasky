@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\AssignMembersRequest;
 use App\Http\Requests\attachfileRequest;
 use App\Http\Requests\dependencyrequest;
+use App\Http\Requests\FilterTaskRequest;
 use App\Http\Requests\TaskstoreRequest;
 use App\Http\Requests\TasksupdateRequest;
 use App\Http\Requests\UpdateStatusRequest;
@@ -439,4 +440,40 @@ class TaskController extends Controller
 ]);
     return response()->json(['message' => __('message.reject_task')]);
     }
+
+    public function filter(FilterTaskRequest $request, Project $project)
+{
+    Gate::authorize('view', $project);
+
+    $tasks = Task::where('project_id', $project->id);
+
+    // Filter by status
+    if ($request->filled('status')) {
+        $tasks->where('status', $request->status);
+    }
+
+    // Filter by priority
+    if ($request->filled('priority')) {
+        $tasks->where('priority', $request->priority);
+    }
+
+    // Filter by start date
+    if ($request->filled('start_date')) {
+        $tasks->whereDate('start_date', '>=', $request->start_date);
+    }
+
+    // Filter by end date
+    if ($request->filled('end_date')) {
+        $tasks->whereDate('end_date', '<=', $request->end_date);
+    }
+
+    return TaskResource::collection(
+        $tasks->with([
+            'members',
+            'attachments',
+            'dependencies',
+            'history'
+        ])->get()
+    );
+}
 }

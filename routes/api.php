@@ -126,6 +126,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::get('/tasks/{task}', [TaskController::class, 'show']);
             Route::post('/tasks/{task}/attach-file', [TaskController::class, 'attachFile']);
             Route::delete('/tasks/{task}/file/{attachment}', [TaskController::class, 'removeAttachment']);
+            Route::get('/tasks/filter', [PersonalTaskController::class, 'filter']);
 
             Route::get('/categories', [CategoryController::class, 'index']);
             Route::post('/categories', [CategoryController::class, 'store']);

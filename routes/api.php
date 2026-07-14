@@ -8,7 +8,6 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Projectcontroller;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RewardController;
-use App\Http\Controllers\TagController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\UserSettingsController;
@@ -21,7 +20,7 @@ Route::post('/admin/login', [AuthController::class, 'adminLogin']);
 Route::post('/forgot-password', [AuthController::class, 'sendResetCode']);
 Route::post('/verify-reset-code', [AuthController::class, 'verifyResetCode']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
-Route::middleware(['auth:sanctum', 'local'])->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::post('/user/language', [UserSettingsController::class, 'updateLanguage']);
@@ -116,8 +115,9 @@ Route::middleware(['auth:sanctum', 'local'])->group(function () {
         });
         Route::middleware(['auth:sanctum'])->group(function () {
             // projects
-            Route::get('/projects/{id}', [Projectcontroller::class, 'show']);
             Route::get('/projects/search', [Projectcontroller::class, 'search']);
+            Route::get('/projects/{id}', [Projectcontroller::class, 'show']);
+            
             // teams
             Route::get('/teams/{team}', [TeamController::class, 'show']);
             Route::get('/invitations', [TeamController::class, 'allInvitation']);
